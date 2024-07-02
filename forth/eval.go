@@ -48,30 +48,27 @@ func (e *Evaluator) Process(row string) ([]int, error) {
 
 		num, err := strconv.Atoi(part)
 		isNumber := err == nil
-		if index == 1 && parts[0] == ":" && isNumber {
-			return nil, errors.New("can't redefine numbers")
-		}
 
-		// если число
-		if err == nil {
-			operator := func() error {
+		operator, ok := e.operators[part]
+		if !ok && isNumber {
+			operator = func() error {
 				e.stack = append(e.stack, num)
 
 				return nil
 			}
-
-			funcs = append(funcs, operator)
-			continue
 		}
-
-		operator, ok := e.operators[part]
 
 		//override или новый оператор без разницы, всегда высчитываем занова
 		if index == 1 && parts[0] == ":" {
+			if isNumber {
+				return nil, errors.New("can't redefine numbers")
+			}
+
 			newOperator = part
 			continue
 		}
-		if !ok {
+
+		if operator == nil {
 			return nil, errors.New("can't find operator" + part)
 		}
 
